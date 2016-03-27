@@ -691,44 +691,46 @@ class CommandParamsFactory extends Handler {
 
         textMsg.responseNeeded = false;
         // Samsung STK
-        AppInterface.CommandType cmdType = AppInterface.CommandType.fromInt(cmdDet.typeOfCommand);
-        boolean isSamsungStk = Resources.getSystem().getBoolean(com.android.internal.R.bool.config_samsung_stk);
-        if (cmdType == AppInterface.CommandType.SEND_SMS && isSamsungStk) {
-            String smscAddress = null;
-            String pdu = null;
+        if (Resources.getSystem().getBoolean(com.android.internal.R.bool.config_samsung_stk)) {
+            AppInterface.CommandType cmdType = AppInterface.CommandType.fromInt(cmdDet.typeOfCommand);
+            if (cmdType == AppInterface.CommandType.SEND_SMS) {
+                String smscAddress = null;
+                String pdu = null;
 
-            ctlv = searchForTag(ComprehensionTlvTag.ADDRESS, ctlvs);
-            if (ctlv != null) {
-                smscAddress = ValueParser.retrieveSMSCaddress(ctlv);
-                CatLog.d(this, "The smsc address is " + smscAddress);
-            }
-            else {
-                CatLog.d(this, "The smsc address is null");
-            }
+                ctlv = searchForTag(ComprehensionTlvTag.ADDRESS, ctlvs);
+                if (ctlv != null) {
+                    smscAddress = ValueParser.retrieveSMSCaddress(ctlv);
+                    CatLog.d(this, "The smsc address is " + smscAddress);
+                }
+                else {
+                    CatLog.d(this, "The smsc address is null");
+                }
 
-            ctlv = searchForTag(ComprehensionTlvTag.SMS_TPDU, ctlvs);
-            if (ctlv != null) {
-                pdu = ValueParser.retrieveSMSTPDU(ctlv);
-                CatLog.d(this, "The SMS tpdu is " + pdu);
+                ctlv = searchForTag(ComprehensionTlvTag.SMS_TPDU, ctlvs);
+                if (ctlv != null) {
+                    pdu = ValueParser.retrieveSMSTPDU(ctlv);
+                    CatLog.d(this, "The SMS tpdu is " + pdu);
+                }
+                else {
+                    CatLog.d(this, "The SMS tpdu is null");
+                }
+                mCmdParams = new SendSMSParams(cmdDet, textMsg, smscAddress, pdu);
+            } else if (cmdType == AppInterface.CommandType.SEND_USSD) {
+                String ussdString = null;
+
+                ctlv = searchForTag(ComprehensionTlvTag.USSD_STRING, ctlvs);
+                if (ctlv != null) {
+                    ussdString = ValueParser.retrieveUSSDString(ctlv);
+                    CatLog.d(this, "The ussd string is " + ussdString);
+                }
+                else {
+                    CatLog.d(this, "The ussd string is null");
+                }
+                mCmdParams = new SendUSSDParams(cmdDet, textMsg, ussdString);
+            } else {
+                mCmdParams = new DisplayTextParams(cmdDet, textMsg);
             }
-            else {
-                CatLog.d(this, "The SMS tpdu is null");
-            }
-            mCmdParams = new SendSMSParams(cmdDet, textMsg, smscAddress, pdu);
-        }
-        else if (cmdType == AppInterface.CommandType.SEND_USSD && isSamsungStk) {
-            String ussdString = null;
-            ctlv = searchForTag(ComprehensionTlvTag.USSD_STRING, ctlvs);
-            if (ctlv != null) {
-                ussdString = ValueParser.retrieveUSSDString(ctlv);
-                CatLog.d(this, "The ussd string is " + ussdString);
-            }
-            else {
-                CatLog.d(this, "The ussd string is null");
-            }
-            mCmdParams = new SendUSSDParams(cmdDet, textMsg, ussdString);
-        }
-        else {
+        } else {
             mCmdParams = new DisplayTextParams(cmdDet, textMsg);
         }
 

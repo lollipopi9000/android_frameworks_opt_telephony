@@ -172,6 +172,10 @@ public class DcTracker extends DcTrackerBase {
     private boolean mDeregistrationAlarmState = false;
     private PendingIntent mImsDeregistrationDelayIntent = null;
 
+    /** MMS Data Profile Device Override */
+    private static final int MMS_DATA_PROFILE = SystemProperties.getInt(
+            "ro.telephony.mms_data_profile", RILConstants.DATA_PROFILE_DEFAULT);
+
     //***** Constructor
     public DcTracker(PhoneBase p) {
         super(p);
@@ -789,9 +793,8 @@ public class DcTracker extends DcTrackerBase {
         boolean allowed =
                     (attachedState || (mAutoAttachOnCreation.get() &&
                             (mPhone.getSubId() == dataSub))) &&
-                    recordsLoaded &&
-                    (state == PhoneConstants.State.IDLE ||
                     (subscriptionFromNv || recordsLoaded) &&
+                    (state == PhoneConstants.State.IDLE ||
                      mPhone.getServiceStateTracker().isConcurrentVoiceAndDataAllowed()) &&
                     internalDataEnabled &&
                     defaultDataSelected &&
@@ -1218,6 +1221,10 @@ public class DcTracker extends DcTrackerBase {
     private ApnSetting makeApnSetting(Cursor cursor) {
         String[] types = parseTypes(
                 cursor.getString(cursor.getColumnIndexOrThrow(Telephony.Carriers.TYPE)));
+        int auth_type = cursor.getInt(cursor.getColumnIndexOrThrow(Telephony.Carriers.AUTH_TYPE));
+        if (auth_type == -1) {
+            auth_type = 0;
+        }
         ApnSetting apn = new ApnSetting(
                 cursor.getInt(cursor.getColumnIndexOrThrow(Telephony.Carriers._ID)),
                 cursor.getString(cursor.getColumnIndexOrThrow(Telephony.Carriers.NUMERIC)),
@@ -1236,7 +1243,7 @@ public class DcTracker extends DcTrackerBase {
                 cursor.getString(cursor.getColumnIndexOrThrow(Telephony.Carriers.MMSPORT)),
                 cursor.getString(cursor.getColumnIndexOrThrow(Telephony.Carriers.USER)),
                 cursor.getString(cursor.getColumnIndexOrThrow(Telephony.Carriers.PASSWORD)),
-                cursor.getInt(cursor.getColumnIndexOrThrow(Telephony.Carriers.AUTH_TYPE)),
+                auth_type,
                 types,
                 cursor.getString(cursor.getColumnIndexOrThrow(Telephony.Carriers.PROTOCOL)),
                 cursor.getString(cursor.getColumnIndexOrThrow(
@@ -1280,7 +1287,14 @@ public class DcTracker extends DcTrackerBase {
             } while (cursor.moveToNext());
         }
 
-        ArrayList<ApnSetting> result = mvnoApns.isEmpty() ? mnoApns : mvnoApns;
+        ArrayList<ApnSetting> result;
+        if (mvnoApns.isEmpty()) {
+            result = mnoApns;
+            // mMvnoMatched = false; - not needed as cleared in createAllApnList
+        } else {
+            result = mvnoApns;
+            mMvnoMatched = true;
+        }
         if (DBG) log("createApnList: X result=" + result);
         return result;
     }
@@ -2362,7 +2376,7 @@ public class DcTracker extends DcTrackerBase {
     }
 
     private boolean isNvSubscription() {
-        int radioTech = mPhone.getServiceState().getRilDataRadioTechnology();
+        int radioTech = mPhone.getServiceState().getRilVoiceRadioTechnology();
         if (mCdmaSsm == null) {
             return false;
         }
@@ -2396,6 +2410,7 @@ public class DcTracker extends DcTrackerBase {
      * Data Connections and setup the preferredApn.
      */
     protected void createAllApnList() {
+        mMvnoMatched = false;
         mAllApnSettings = new ArrayList<ApnSetting>();
         String operator = getOperatorNumeric();
         if (operator != null && !operator.isEmpty()) {
@@ -2937,6 +2952,8 @@ public class DcTracker extends DcTrackerBase {
             return RILConstants.DATA_PROFILE_DEFAULT; // DEFAULT for now
         } else if (TextUtils.equals(apnType, PhoneConstants.APN_TYPE_DUN)) {
             return RILConstants.DATA_PROFILE_TETHERED;
+        } else if (TextUtils.equals(apnType, PhoneConstants.APN_TYPE_MMS)) {
+            return MMS_DATA_PROFILE;
         } else {
             return RILConstants.DATA_PROFILE_DEFAULT;
         }

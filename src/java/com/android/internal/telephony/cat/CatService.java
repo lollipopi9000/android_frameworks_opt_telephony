@@ -907,13 +907,13 @@ public class CatService extends Handler implements AppInterface {
             if (mTimeoutDest == WAITING_SMS_RESULT) {
                 CatLog.d(this, "SMS SEND TIMEOUT");
                 if (CallControlResult.fromInt(mCallControlResultCode) ==
-                        CallControlResult.CALL_CONTROL_NOT_ALLOWED)
+                        CallControlResult.CALL_CONTROL_NOT_ALLOWED) {
                     sendTerminalResponse(mCurrntCmd.mCmdDet,
                             ResultCode.USIM_CALL_CONTROL_PERMANENT, true, 1, null);
-                else
+                } else {
                     sendTerminalResponse(mCurrntCmd.mCmdDet,
                             ResultCode.TERMINAL_CRNTLY_UNABLE_TO_PROCESS, false, 0, null);
-                break;
+                }
             }
             break;
         case MSG_ID_SEND_SMS_RESULT: // Samsung STK SEND_SMS
@@ -925,50 +925,56 @@ public class CatService extends Handler implements AppInterface {
                 cancelTimeOut();
                 CatLog.d(this, "The Msg ID data:" + msg.what);
                 ar = (AsyncResult) msg.obj;
-                if (ar == null || ar.result == null || mCurrntCmd == null || mCurrntCmd.mCmdDet == null)
+                if (ar == null || ar.result == null || mCurrntCmd == null || mCurrntCmd.mCmdDet == null) {
                     break;
+                }
                 sendResult = (int[]) ar.result;
-                if (sendResult.length == 0)
+                if (sendResult.length == 0) {
                     break;
+                }
                 switch (sendResult[0]) {
                     default:
                         CatLog.d(this, "SMS SEND GENERIC FAIL");
                         if (CallControlResult.fromInt(mCallControlResultCode) ==
-                                CallControlResult.CALL_CONTROL_NOT_ALLOWED)
+                                CallControlResult.CALL_CONTROL_NOT_ALLOWED) {
                             sendTerminalResponse(mCurrntCmd.mCmdDet,
                                     ResultCode.USIM_CALL_CONTROL_PERMANENT, true, 1, null);
-                        else
+                        } else {
                             sendTerminalResponse(mCurrntCmd.mCmdDet,
                                     ResultCode.TERMINAL_CRNTLY_UNABLE_TO_PROCESS, false, 0, null);
+                        }
                         break;
                     case SMS_SEND_OK: // '\0'
                         CatLog.d(this, "SMS SEND OK");
                         if (CallControlResult.fromInt(mCallControlResultCode) ==
-                                CallControlResult.CALL_CONTROL_NOT_ALLOWED)
+                                CallControlResult.CALL_CONTROL_NOT_ALLOWED) {
                             sendTerminalResponse(mCurrntCmd.mCmdDet,
                                     ResultCode.USIM_CALL_CONTROL_PERMANENT, true, 1, null);
-                        else
+                        } else {
                             sendTerminalResponse(mCurrntCmd.mCmdDet, ResultCode.OK, false, 0, null);
+                        }
                         break;
                     case SMS_SEND_FAIL:
                         CatLog.d(this, "SMS SEND FAIL - MEMORY NOT AVAILABLE");
                         if (CallControlResult.fromInt(mCallControlResultCode) ==
-                                CallControlResult.CALL_CONTROL_NOT_ALLOWED)
+                                CallControlResult.CALL_CONTROL_NOT_ALLOWED) {
                             sendTerminalResponse(mCurrntCmd.mCmdDet,
                                     ResultCode.USIM_CALL_CONTROL_PERMANENT, true, 1, null);
-                        else
+                        } else {
                             sendTerminalResponse(mCurrntCmd.mCmdDet,
                                     ResultCode.TERMINAL_CRNTLY_UNABLE_TO_PROCESS, false, 0, null);
+                        }
                         break;
                     case SMS_SEND_RETRY:
                         CatLog.d(this, "SMS SEND FAIL RETRY");
                         if (CallControlResult.fromInt(mCallControlResultCode) ==
-                                CallControlResult.CALL_CONTROL_NOT_ALLOWED)
+                                CallControlResult.CALL_CONTROL_NOT_ALLOWED) {
                             sendTerminalResponse(mCurrntCmd.mCmdDet,
                                     ResultCode.USIM_CALL_CONTROL_PERMANENT, true, 1, null);
-                        else
+                        } else {
                             sendTerminalResponse(mCurrntCmd.mCmdDet,
                                     ResultCode.NETWORK_CRNTLY_UNABLE_TO_PROCESS, false, 0, null);
+                        }
                         break;
                     }
             }

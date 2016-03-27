@@ -2045,5 +2045,9 @@ public interface CommandsInterface {
      * sms send result from modem(RIL) to catService
      */
     void setOnCatSendSmsResult(Handler h, int what, Object obj);
+
+    /**
+     * @hide
+     */
     void unSetOnCatSendSmsResult(Handler h);
 }
